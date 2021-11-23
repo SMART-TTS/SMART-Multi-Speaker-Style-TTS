@@ -1,0 +1,10 @@
+**~
+*/*.csv
+**__pycache__**
+**.pyc
+**.swo
+**.swp
+KoBERT*
+KoSentenceBERT_SKTBERT*
+logs*
+kobert*
