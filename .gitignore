@@ -4,9 +4,9 @@
 **.pyc
 **.swo
 **.swp
-**.pt
-**.tsv
-kobert/saved/*.spiece
-kobert/saved/*.zip
-kobert/saved/*/*.bin
+#**.pt
+#**.tsv
+#kobert/saved/*.spiece
+#kobert/saved/*.zip
+#kobert/saved/*/*.bin
 logs*
