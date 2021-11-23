@@ -1,0 +1,5 @@
+**.tsv filter=lfs diff=lfs merge=lfs -text
+**.pt filter=lfs diff=lfs merge=lfs -text
+kobert/saved/*.spiece filter=lfs diff=lfs merge=lfs -text
+kobert/saved/*.zip filter=lfs diff=lfs merge=lfs -text
+kobert/saved/*/*.bin filter=lfs diff=lfs merge=lfs -text
