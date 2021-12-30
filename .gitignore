@@ -10,4 +10,3 @@
 #kobert/saved/*.zip
 #kobert/saved/*/*.bin
 logs*
-.gitignore
