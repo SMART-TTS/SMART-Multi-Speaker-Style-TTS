@@ -13,7 +13,7 @@ VITS 모델을 기반으로 하여 아래 부분들을 개선하였습니다.
 
 Done
 * Text encoder를 Transformer block에서 Convolutional block으로 교체, 불안정한 한국어 학습 개선
-* Style Tag 를 활용한 발화 스타일 인코딩 기법
+* SKT의 pre-trained 된 Ko-Sentence-BERT를 활용하여 Style Tag로 부터 style embedding을 추출, conditional input으로 주어 학습
 * 화자와 text 간의 disentanglement를 위한 random reference sampling 기법
 * 대용량 화자 + 소용량 화자에 대한 학습
 
@@ -49,6 +49,7 @@ Synthesized audio samples can be found in ./samples
 
 ## Reference code
 * VITS : https://github.com/soobinseo/Transformer-TTS
-
+* Ko-Sentence-BERT-SKTBERT : https://github.com/BM-K/KoSentenceBERT-SKT
+ 
 본 프로젝트 관련 개선사항들에 대한 기술문서는 [여기]()를 참고해 주세요.
 
