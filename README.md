@@ -28,26 +28,27 @@ To do
 To train the model, run this command:
 <pre>
 <code>
-python train_transformer.py
+python train.py -c configs/[config].json -m [name]
 </code>
 </pre>
 
 
-## Evaluation (incomplete)
+## Evaluation
 To evaluate, run:
 <pre>
 <code>
-python synthesize.py --rhythm_scale=1.0 --restore_step1=860000
+python inference.py
 </code>
 </pre>
 
-## Results (incomplete)
+## Results
 Synthesized audio samples can be found in ./samples
 
-현재 ./samples에 저장된 샘플들은 연구실 보유중인 DB를 사용해 학습한 샘플이며,
-내년초 새로운 한국어 DB 공개 예정에 있습니다.
+현재 ./samples에 저장된 샘플들은 한국어 DB를 사용해 학습한 샘플이며,
+2022년 초 새로운 한국어 DB 공개 예정에 있습니다.
 
-## Reference code (incomplete)
-* Transformer-TTS : https://github.com/soobinseo/Transformer-TTS
-* SMART-Vocoder : https://github.com/SMART-TTS/SMART-G2P
-* SMART-G2P : https://github.com/SMART-TTS/SMART-Vocoder
+## Reference code
+* VITS : https://github.com/soobinseo/Transformer-TTS
+
+본 프로젝트 관련 개선사항들에 대한 기술문서는 [여기]()를 참고해 주세요.
+
