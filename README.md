@@ -12,7 +12,7 @@ Speaker code와 Style Tag Text로 부터 speaker embedding과 style embedding을
 VITS 모델을 기반으로 하여 아래 부분들을 개선하였습니다.
 
 Done
-* 한국어 Text 반영을 위해 Convolutional layer 기반의 text encoder
+* Text encoder를 Transformer block에서 Convolutional block으로 교체, 불안정한 한국어 학습 개선
 * Style Tag 를 활용한 발화 스타일 인코딩 기법
 * 화자와 text 간의 disentanglement를 위한 random reference sampling 기법
 * 대용량 화자 + 소용량 화자에 대한 학습
@@ -21,16 +21,8 @@ To do
 * Speaker / Style / Text disentanglement via mutual information minimization 기법 적용
 * Multi-language TTS (한국어/영어)
 
-## Requirements (incomplete)
-* python 3.7.9
-
-## Preprocessing (incomplete)
-To preprocess mel spectrogram and linear spectrogram magnitude, run this command:
-<pre>
-<code>
-python prepare_data.py
-</code>
-</pre>
+## Requirements
+* python 3.6.13
 
 ## Training (incomplete)
 To train the model, run this command:
