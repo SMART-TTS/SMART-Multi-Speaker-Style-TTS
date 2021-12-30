@@ -26,7 +26,7 @@ def get_spkrs(filename):
 				spkrs.append(cur_spkr)
 	return spkrs
 
-IITP_ALL_spkr_ls = get_spkrs('filelists/metadata_IITP.csv')
+ALL_spkr_ls = get_spkrs('filelists/[ALL_SPKRS.csv]')
 
 class TextAudioTagLoader(torch.utils.data.Dataset):
     """
@@ -36,7 +36,7 @@ class TextAudioTagLoader(torch.utils.data.Dataset):
     """
     def __init__(self, audiopaths_text_emo_tag_sid, hparams, inf=False):
         self.audiopaths_text_emo_tag_sid = load_filepaths_and_text(audiopaths_text_emo_tag_sid)
-        self.spkr_ls = IITP_ALL_spkr_ls
+        self.spkr_ls = ALL_spkr_ls
         self.max_wav_value = hparams.max_wav_value 
         self.sampling_rate = hparams.sampling_rate
         self.filter_length  = hparams.filter_length
@@ -56,7 +56,6 @@ class TextAudioTagLoader(torch.utils.data.Dataset):
             self._filter()
         else:
             self._new_()
-
 
     def _filter(self):
         """

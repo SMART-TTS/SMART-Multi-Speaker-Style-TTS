@@ -65,7 +65,7 @@ def run(rank, n_gpus, hps):
       hps.data.filter_length // 2 + 1,
       hps.train.segment_size // hps.data.hop_length,
       use_ref=True,
-      use_sdp=True, ######################################################### sdp usage
+      use_sdp=True, 
       n_speakers=hps.data.n_speakers,
       **hps.model).cuda(rank)
   net_d = MultiPeriodDiscriminator(hps.model.use_spectral_norm).cuda(rank)
@@ -81,8 +81,6 @@ def run(rank, n_gpus, hps):
       eps=hps.train.eps)
   net_g = DDP(net_g, device_ids=[rank], find_unused_parameters=True)
   net_d = DDP(net_d, device_ids=[rank], find_unused_parameters=True)
-
-
 
   train_dataset = TextAudioTagLoader(hps.data.training_files, hps.data)
   train_sampler = DistributedBucketSampler(
@@ -181,7 +179,6 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
         loss_dur = torch.sum(l_length.float())
         loss_mel = F.l1_loss(y_mel, y_hat_mel) * hps.train.c_mel
         loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * hps.train.c_kl
-#        loss_style = F.l1_loss(g.detach(), t)
 
         loss_fm = feature_loss(fmap_r, fmap_g)
         loss_gen, losses_gen = generator_loss(y_d_hat_g)
@@ -195,7 +192,6 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
 
     if rank==0:
       if global_step % hps.train.log_interval == 0:
-#      if global_step % 1 == 0:
         lr = optim_g.param_groups[0]['lr']
         losses = [loss_disc, loss_gen, loss_fm, loss_mel, loss_dur, loss_kl]
         logger.info('Train Epoch: {} [{:.0f}%]'.format(
@@ -222,7 +218,6 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
           scalars=scalar_dict)
 
       if global_step % hps.train.eval_interval == 0:
-#      if global_step % 1 == 0:
         evaluate(hps, net_g, eval_loader, writer_eval)
         utils.save_checkpoint(net_g, optim_g, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "G_{}.pth".format(global_step)))
         utils.save_checkpoint(net_d, optim_d, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "D_{}.pth".format(global_step)))
@@ -277,23 +272,12 @@ def evaluate(hps, generator, eval_loader, writer_eval):
         hps.data.win_length,
         hps.data.mel_fmin,
         hps.data.mel_fmax)
-#      y_hat_mel_tag = mel_spectrogram_torch(
-#        y_hat_tag.squeeze(1).float(),
-#        hps.data.filter_length,
-#        hps.data.n_mel_channels,
-#        hps.data.sampling_rate,
-#        hps.data.hop_length,
-#        hps.data.win_length,
-#        hps.data.mel_fmin,
-#        hps.data.mel_fmax)
 
     image_dict = {
       "gen/mel": utils.plot_spectrogram_to_numpy(y_hat_mel[0].cpu().numpy())
-#      "gen/mel_tag": utils.plot_spectrogram_to_numpy(y_hat_mel_tag[0].cpu().numpy())
     }
     audio_dict = {
       "gen/audio": y_hat[0,:,:y_hat_lengths[0]]
-#      "gen/audio_tag": y_hat_tag[0,:,:y_hat_lengths[0]]
 
     }
     if global_step == 0:
