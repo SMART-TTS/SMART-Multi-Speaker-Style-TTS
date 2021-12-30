@@ -23,6 +23,7 @@ To do
 
 ## Requirements
 * python 3.6.13
+* Ko-Sentence-BERT-SKTBERT dependency (sub directory의 requirements 확인)
 
 ## Training (incomplete)
 To train the model, run this command:
@@ -31,7 +32,6 @@ To train the model, run this command:
 python train.py -c configs/[config].json -m [name]
 </code>
 </pre>
-
 
 ## Evaluation
 To evaluate, run:
