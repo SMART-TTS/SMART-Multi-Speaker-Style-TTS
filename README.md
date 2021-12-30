@@ -5,7 +5,7 @@ VITS(Conditional Variational Autoeencoder with Adversarial Learning for End-to-E
 과제의 일환으로 공개된 코드입니다.
 
 SMART-Multi-Speaker-Style-TTS 모델은 [VITS 모델](https://github.com/jaywalnut310/vits)을 기반으로
-Speaker code와 Style Tag Text로 부터 speaker embedding과 style embedding을 각각 추출하여 반영하는 Multi-Speaker Style TTS 모델입니다.
+Reference speaker embedding와 Style Tag Text로 부터 speaker embedding과 style embedding을 각각 추출하여 반영하는 Multi-Speaker Style TTS 모델입니다.
 
 학습에 사용한 다화자 한국어 데이터셋은 본 과제의 일환으로 SKT에서 수집한 데이터셋으로, 2022년 초에 공개될 예정입니다.
 
