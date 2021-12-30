@@ -25,7 +25,7 @@ To do
 * python 3.6.13
 * Ko-Sentence-BERT-SKTBERT dependency (sub directory의 requirements 확인)
 
-## Training (incomplete)
+## Training
 To train the model, run this command:
 <pre>
 <code>
