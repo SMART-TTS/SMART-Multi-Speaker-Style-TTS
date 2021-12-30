@@ -17,6 +17,9 @@ from sentence_transformers import SentenceTransformer
 
 def get_spkrs(filename):
 	spkrs = list()
+	large_small = dict()
+	large_small['LARGE'] = list()
+	large_small['SMALL'] = list()
 	with open(filename, encoding='utf-8') as f:
 		lines = f.readlines()
 		for line in lines:
@@ -24,9 +27,11 @@ def get_spkrs(filename):
 			cur_spkr = fileloc.split('/')[6]
 			if cur_spkr not in spkrs:
 				spkrs.append(cur_spkr)
-	return spkrs
+				large_small[fileloc.split('/')[5]].append(cur_spkr)
 
-ALL_spkr_ls = get_spkrs('filelists/[ALL_SPKRS.csv]')
+	return spkrs, large_small
+
+ALL_spkr_ls, large_small_ls = get_spkrs('filelists/metadata_train.csv')
 
 class TextAudioTagLoader(torch.utils.data.Dataset):
     """
@@ -34,9 +39,9 @@ class TextAudioTagLoader(torch.utils.data.Dataset):
         2) normalizes text and converts them to sequences of integers
         3) computes spectrograms from audio files.
     """
-    def __init__(self, audiopaths_text_emo_tag_sid, hparams, inf=False):
+    def __init__(self, audiopaths_text_emo_tag_sid, hparams, random_ref=False, inf=False):
         self.audiopaths_text_emo_tag_sid = load_filepaths_and_text(audiopaths_text_emo_tag_sid)
-        self.spkr_ls = ALL_spkr_ls
+        self.spkr_ls = IITP_ALL_spkr_ls
         self.max_wav_value = hparams.max_wav_value 
         self.sampling_rate = hparams.sampling_rate
         self.filter_length  = hparams.filter_length
@@ -57,6 +62,30 @@ class TextAudioTagLoader(torch.utils.data.Dataset):
         else:
             self._new_()
 
+        self.base_dir = '/[DB_base_dir]/'
+        self.sid_ls = IITP_ALL_spkr_ls
+        self.large_small = large_small_ls
+        if random_ref:
+            self.spkr_audiopath_dict = self.get_spkr_audiopath_dict(self.large_small, self.sid_ls, self.base_dir)
+            self.random_ref=True
+        else:
+            self.random_ref=False
+
+    def get_spkr_audiopath_dict(self, large_small_dict, sid_ls, base_dir):
+        sid_audio_dict = dict()
+        for large_or_small in large_small_dict:
+            for sid in large_small_dict[large_or_small]:
+                audio_ls = os.listdir(os.path.join(base_dir, large_or_small, sid, "wav_22050"))
+                sid_audio_dict[sid] = list()
+                for audio_fname in audio_ls:
+                    if audio_fname[-3:] == 'wav':
+                        audio_full_fname = os.path.join(base_dir, large_or_small, sid, "wav_22050", audio_fname)
+                        if audio_full_fname not in sid_audio_dict[sid]:
+                            sid_audio_dict[sid].append(audio_full_fname)
+
+
+        return sid_audio_dict
+
     def _filter(self):
         """
         Filter text & store spec lengths
@@ -73,7 +102,7 @@ class TextAudioTagLoader(torch.utils.data.Dataset):
             sid = self.spkr_ls.index(spkr)
             spec_length = os.path.getsize(audiopath)//(2*self.hop_length)
             wav_length = os.path.getsize(audiopath)//2
-            if spec_length > 32 and wav_length < 10*self.sampling_rate:
+            if spec_length > 32 and wav_length < 8*self.sampling_rate:
                 if self.min_text_len <= len(text) and len(text) <= self.max_text_len:
                     audiopaths_text_emo_tag_sid_new.append([audiopath, text, emo, tag, sid])			# sid is appended at the end
                     lengths.append(os.path.getsize(audiopath) // (2 * self.hop_length))
@@ -81,7 +110,7 @@ class TextAudioTagLoader(torch.utils.data.Dataset):
                     ctr += 1
             else:
                 ctr += 1
-        print("audio smaller than 32 frames or larger than 10 sec and text between 10 and 190:", str(ctr))
+        print("audio smaller than 32 frames or larger than 8 sec and text between 10 and 190:", str(ctr))
         self.audiopaths_text_emo_tag_sid = audiopaths_text_emo_tag_sid_new
         self.lengths = lengths
 
@@ -95,12 +124,19 @@ class TextAudioTagLoader(torch.utils.data.Dataset):
 
     def get_audio_text_emo_tag_pair(self, audiopath_text_emo_tag_sid):
         # separate filename, ref_filename and text
-        audiopath, text,  emo, tag, sid = audiopath_text_emo_tag_sid[0], audiopath_text_emo_tag_sid[1], audiopath_text_emo_tag_sid[2], audiopath_text_emo_tag_sid[3], audiopath_text_emo_tag_sid[4]
-        text = self.get_text.syllables_to_cjj(text)
+        audiopath, text_,  emo, tag, sid = audiopath_text_emo_tag_sid[0], audiopath_text_emo_tag_sid[1], audiopath_text_emo_tag_sid[2], audiopath_text_emo_tag_sid[3], audiopath_text_emo_tag_sid[4]
+        text = self.get_text.syllables_to_cjj(text_)
         text = torch.LongTensor(torch.cat([torch.as_tensor(x) for x in text]))
         tag = self.get_tag.tag_augment(tag)
         mel, spec, wav = self.get_audio(audiopath)
-        return (text, mel, spec, wav, tag, sid)
+
+        spkr = audiopath.split('/')[6]
+        if self.random_ref:
+            refpath = random.choice(self.spkr_audiopath_dict[spkr])
+            mel_ref, spec_ref, wav_ref = self.get_audio(refpath)
+            return (text, mel, spec, wav, tag, sid, spec_ref, text_)
+        else:
+            return (text, mel, spec, wav, tag, sid, spec, text_)
 
     def get_audio(self, filename):
         audio, sampling_rate = load_wav_to_torch(filename, self.sampling_rate)
@@ -149,24 +185,29 @@ class TextAudioTagCollate():
         max_mel_len = max([x[1].size(1) for x in batch])
         max_spec_len = max([x[2].size(1) for x in batch])
         max_wav_len = max([x[3].size(1) for x in batch])
+        max_spec_ref_len = max([x[6].size(1) for x in batch])
 
         text_lengths = torch.LongTensor(len(batch))
         mel_lengths = torch.LongTensor(len(batch))
         spec_lengths = torch.LongTensor(len(batch))
         wav_lengths = torch.LongTensor(len(batch))
+        spec_ref_lengths = torch.LongTensor(len(batch))
 
         text_padded = torch.LongTensor(len(batch), max_text_len)
         mel_padded = torch.FloatTensor(len(batch), batch[0][1].size(0), max_mel_len)
         spec_padded = torch.FloatTensor(len(batch), batch[0][2].size(0), max_spec_len)
         wav_padded = torch.FloatTensor(len(batch), 1, max_wav_len)
         sids = torch.LongTensor(len(batch))
+        spec_ref_padded = torch.FloatTensor(len(batch), batch[0][6].size(0), max_spec_ref_len)
        
         text_padded.zero_()
         mel_padded.zero_()
         spec_padded.zero_()
         wav_padded.zero_()
+        spec_ref_padded.zero_()
 
         tag_ls = list()
+        text_ls = list()
 
         for i in range(len(ids_sorted_decreasing)):
             row = batch[ids_sorted_decreasing[i]]
@@ -192,14 +233,21 @@ class TextAudioTagCollate():
         
             sid = row[5]
             sids[i] = sid
+
+            spec_ref = row[6]
+            spec_ref_padded[i, :, :spec_ref.size(1)] = spec_ref	# b, c, t
+            spec_ref_lengths[i] = spec_ref.size(1)
+
+            text_ls.append(row[7])
+           
         tag_info = self.sbert.my_collate(tag_ls)
         with torch.no_grad():
             tag_emb = self.sbert(tag_info)["sentence_embedding"].unsqueeze(1).clone().detach()
         tag_emb = torch.FloatTensor(tag_emb)
         
         if self.return_ids:
-            return text_padded, text_lengths, mel_padded, mel_lengths, spec_padded, spec_lengths, wav_padded, wav_lengths, tag_emb, sids, ids_sorted_decreasing
-        return text_padded, text_lengths, mel_padded, mel_lengths, spec_padded, spec_lengths, wav_padded, wav_lengths, tag_emb, sids
+            return text_padded, text_lengths, mel_padded, mel_lengths, spec_padded, spec_lengths, wav_padded, wav_lengths, tag_emb, sids, spec_ref_padded, spec_ref_lengths, text_ls, ids_sorted_decreasing
+        return text_padded, text_lengths, mel_padded, mel_lengths, spec_padded, spec_lengths, wav_padded, wav_lengths, tag_emb, sids, spec_ref_padded, spec_ref_lengths, text_ls
 
 
 class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):

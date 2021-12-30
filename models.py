@@ -351,7 +351,6 @@ class Generator(torch.nn.Module):
         for l in self.resblocks:
             l.remove_weight_norm()
 
-
 class DiscriminatorP(torch.nn.Module):
     def __init__(self, period, kernel_size=5, stride=3, use_spectral_norm=False):
         super(DiscriminatorP, self).__init__()
@@ -415,7 +414,6 @@ class DiscriminatorS(torch.nn.Module):
         x = torch.flatten(x, 1, -1)
 
         return x, fmap
-
 
 class MultiPeriodDiscriminator(torch.nn.Module):
     def __init__(self, use_spectral_norm=False):
@@ -518,10 +516,9 @@ class SynthesizerTrn(nn.Module):
   def forward(self, x, x_lengths, y, y_lengths, ref, ref_lengths, tag_emb, sid=None):
 
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
-    s = self.emb_s(sid).unsqueeze(-1)
-    g = s
+    g = self.emb_g(ref.transpose(1,2), ref_lengths) # [b, h, 1]
     t = self.tag_encoder(tag_emb)
-    g = torch.cat((s, t), 1)
+    g = torch.cat((g, t), 1)
     g = self.emb_encoder(g)
 
     z, m_q, logs_q, y_mask = self.enc_q(y, y_lengths, g=g)

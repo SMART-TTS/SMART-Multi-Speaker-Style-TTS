@@ -31,7 +31,8 @@ from losses import (
   kl_loss
 )
 from mel_processing import mel_spectrogram_torch, spec_to_mel_torch
-from text.symbols import hangul_symbols as symbols
+from text.symbols import symbols
+
 
 torch.backends.cudnn.benchmark = True
 global_step = 0
@@ -43,7 +44,7 @@ def main():
 
   n_gpus = torch.cuda.device_count()
   os.environ['MASTER_ADDR'] = 'localhost'
-  os.environ['MASTER_PORT'] = '80001'
+  os.environ['MASTER_PORT'] = '80000'
 
   hps = utils.get_hparams()
   mp.spawn(run, nprocs=n_gpus, args=(n_gpus, hps,))
@@ -82,7 +83,7 @@ def run(rank, n_gpus, hps):
   net_g = DDP(net_g, device_ids=[rank], find_unused_parameters=True)
   net_d = DDP(net_d, device_ids=[rank], find_unused_parameters=True)
 
-  train_dataset = TextAudioTagLoader(hps.data.training_files, hps.data)
+  train_dataset = TextAudioTagLoader(hps.data.training_files, hps.data, random_ref=True)
   train_sampler = DistributedBucketSampler(
       train_dataset,
       hps.train.batch_size,
@@ -94,7 +95,7 @@ def run(rank, n_gpus, hps):
   train_loader = DataLoader(train_dataset, num_workers=8, shuffle=False, pin_memory=True,
       collate_fn=collate_fn, batch_sampler=train_sampler)
   if rank == 0:
-    eval_dataset = TextAudioTagLoader(hps.data.validation_files, hps.data)
+    eval_dataset = TextAudioTagLoader(hps.data.validation_files, hps.data, random_ref=True)
     eval_loader = DataLoader(eval_dataset, num_workers=8, shuffle=False,
         batch_size=hps.train.batch_size, pin_memory=True,
         drop_last=False, collate_fn=collate_fn)
@@ -130,15 +131,16 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
 
   net_g.train()
   net_d.train()
-  for batch_idx, (x, x_lengths, mel, mel_lengths, spec, spec_lengths, y, y_lengths, tag_emb, sid) in enumerate(train_loader):
+  for batch_idx, (x, x_lengths, mel, mel_lengths, spec, spec_lengths, y, y_lengths, tag_emb, sid, spec_ref, spec_ref_lengths) in enumerate(train_loader):
     x, x_lengths = x.cuda(rank, non_blocking=True), x_lengths.cuda(rank, non_blocking=True)
     mel, mel_lengths = mel.cuda(rank, non_blocking=True), mel_lengths.cuda(rank, non_blocking=True)
     spec, spec_lengths = spec.cuda(rank, non_blocking=True), spec_lengths.cuda(rank, non_blocking=True)
     y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
     tag_emb, sid = tag_emb.cuda(rank, non_blocking=True), sid.cuda(rank, non_blocking=True)
+    spec_ref, spec_ref_lengths = spec_ref.cuda(rank, non_blocking=True), spec_ref_lengths.cuda(rank, non_blocking=True)
     with autocast(enabled=hps.train.fp16_run):
       y_hat, l_length, attn, ids_slice, x_mask, z_mask,\
-      (z, z_p, m_p, logs_p, m_q, logs_q) = net_g(x, x_lengths, spec, spec_lengths, spec, spec_lengths, tag_emb, sid)
+      (z, z_p, m_p, logs_p, m_q, logs_q) = net_g(x, x_lengths, spec, spec_lengths, spec_ref, spec_ref_lengths, tag_emb, sid)
 
       mel_ = spec_to_mel_torch(
           spec,
@@ -230,12 +232,13 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
 def evaluate(hps, generator, eval_loader, writer_eval):
     generator.eval()
     with torch.no_grad():
-      for batch_idx, (x, x_lengths, mel, mel_lengths, spec, spec_lengths, y, y_lengths, tag_emb, sid) in enumerate(eval_loader):
+      for batch_idx, (x, x_lengths, mel, mel_lengths, spec, spec_lengths, y, y_lengths, tag_emb, sid, spec_ref, spec_ref_lengths) in enumerate(eval_loader):
         x, x_lengths = x.cuda(0), x_lengths.cuda(0)
         mel, mel_lengths = mel.cuda(0), mel_lengths.cuda(0)
         spec, spec_lengths = spec.cuda(0), spec_lengths.cuda(0)
         y, y_lengths = y.cuda(0), y_lengths.cuda(0)
         tag_emb, sid = tag_emb.cuda(0), sid.cuda(0)
+        spec_ref, spec_ref_lengths = spec_ref.cuda(0), spec_ref_lengths.cuda(0)
 
         # remove else
         x = x[:1]
@@ -248,13 +251,13 @@ def evaluate(hps, generator, eval_loader, writer_eval):
         y_lengths = y_lengths[:1]
         tag_emb = tag_emb[:-1]
         sid = sid[:-1]
+        spec_ref = spec_ref[:1]
+        spec_ref_lengths = spec_ref_lengths[:1]
 
         break
-      y_hat, attn, mask, *_ = generator.module.infer(x, x_lengths, spec, spec_lengths, tag_emb, sid, max_len=1000)
-#      y_hat_tag, attn_tag, mask_tag, *_ = generator.module.infer_tag(x, x_lengths, tag_emb, sid, max_len=1000)
+      y_hat, attn, mask, *_ = generator.module.infer(x, x_lengths, spec_ref, spec_ref_lengths, tag_emb, sid, max_len=1000)
 
       y_hat_lengths = mask.sum([1,2]).long() * hps.data.hop_length
-#      y_hat_lengths_tag = mask_tag.sum([1,2]).long() * hps.data.hop_length
 
       mel_ = spec_to_mel_torch(
           spec,
