@@ -11,15 +11,13 @@ Reference speaker embedding와 Style Tag Text로 부터 speaker embedding과 sty
 
 VITS 모델을 기반으로 하여 아래 부분들을 개선하였습니다.
 
-Done
-* Text encoder를 Transformer block에서 Convolutional block으로 교체, 불안정한 한국어 학습 개선
-* SKT의 pre-trained 된 Ko-Sentence-BERT를 활용하여 Style Tag로 부터 style embedding을 추출, conditional input으로 주어 학습
-* 화자와 text 간의 disentanglement를 위한 random reference sampling 기법
-* 대용량 화자 + 소용량 화자에 대한 학습
-
-To do
-* Speaker / Style / Text disentanglement via mutual information minimization 기법 적용
-* Multi-language TTS (한국어/영어)
+Implemented
+- [x] Text encoder를 Transformer block에서 Convolutional block으로 교체, 불안정한 한국어 학습 개선
+- [x] KT의 pre-trained 된 Ko-Sentence-BERT를 활용하여 Style Tag로 부터 style embedding을 추출, conditional input으로 주어 학습
+- [x] 자와 text 간의 disentanglement를 위한 random reference sampling 기법
+- [x] 대용량 화자 + 소용량 화자에 대한 학습
+- [ ] Speaker / Style / Text disentanglement via mutual information minimization 기법 적용
+- [ ] Multi-language TTS (한국어/영어)
 
 ## Requirements
 * python 3.6.13
@@ -50,4 +48,3 @@ python inference.py
 * Ko-Sentence-BERT-SKTBERT : https://github.com/BM-K/KoSentenceBERT-SKT
 
 본 프로젝트 관련 개선사항들에 대한 기술문서는 [여기](https://drive.google.com/file/d/1qHCai1v6KvlRyPcVIYCwYYHwTiPixYSR/view?usp=sharing)를 참고해 주세요.
-
