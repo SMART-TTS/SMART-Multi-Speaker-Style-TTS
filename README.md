@@ -41,7 +41,7 @@ python inference.py
 </pre>
 
 ## Results
-현재 [./samples](https://github.com/SMART-TTS/SMART-Multi-Speaker-Style-TTS/tree/main/samples)에 저장된 샘플들은 한국어 DB를 사용해 학습한 샘플이며,
+현재 [samples](https://github.com/SMART-TTS/SMART-Multi-Speaker-Style-TTS/tree/main/samples)에 저장된 샘플들은 한국어 DB를 사용해 학습한 샘플이며,
 2022년 초 새로운 한국어 DB 공개 예정에 있습니다.
 
 ## Reference code
