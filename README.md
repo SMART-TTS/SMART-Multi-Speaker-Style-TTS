@@ -22,6 +22,7 @@ Implemented
 ## Requirements
 * python 3.6.13
 * Ko-Sentence-BERT-SKTBERT dependency (sub directory의 requirements 확인)
+* VITS dependency (requirements.txt)
 
 ## Training
 To train the model, run this command:
