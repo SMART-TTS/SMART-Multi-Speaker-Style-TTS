@@ -45,7 +45,7 @@ python inference.py
 2022년 초 새로운 한국어 DB 공개 예정에 있습니다.
 
 ## Reference code
-* VITS : https://github.com/soobinseo/Transformer-TTS
+* VITS : https://github.com/jaywalnut310/vits
 * Ko-Sentence-BERT-SKTBERT : https://github.com/BM-K/KoSentenceBERT-SKT
 
 ## Technical document
