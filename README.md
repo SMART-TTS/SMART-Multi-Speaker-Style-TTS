@@ -48,4 +48,9 @@ python inference.py
 * VITS : https://github.com/soobinseo/Transformer-TTS
 * Ko-Sentence-BERT-SKTBERT : https://github.com/BM-K/KoSentenceBERT-SKT
 
+## Technical document
 본 프로젝트 관련 개선사항들에 대한 기술문서는 [여기](https://drive.google.com/file/d/1qHCai1v6KvlRyPcVIYCwYYHwTiPixYSR/view?usp=sharing)를 참고해 주세요.
+
+## Licence
+**SMART-Multi-Speaker-Style-TTS** is licensed under the GNU General Public License version 3. The license can be found under LICENSE.
+**SMART-Multi-Speaker-Style-TTS** uses a modified version of code from **vits** in which the original code can be found [**here**](https://github.com/jaywalnut310/vits), and is licensed under the MIT license.
