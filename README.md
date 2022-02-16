@@ -13,7 +13,7 @@ VITS 모델을 기반으로 하여 아래 부분들을 개선하였습니다.
 
 Implemented
 - [x] Text encoder를 Transformer block에서 Convolutional block으로 교체, 불안정한 한국어 학습 개선
-- [x] KT의 pre-trained 된 Ko-Sentence-BERT를 활용하여 Style Tag로 부터 style embedding을 추출, conditional input으로 주어 학습
+- [x] pre-trained 된 Ko-Sentence-BERT를 활용하여 Style Tag로 부터 style embedding을 추출, conditional input으로 주어 학습
 - [x] 화자, 스타일,  간의 disentanglement를 위한 random reference sampling 기법
 - [x] 대용량 화자 + 소용량 화자에 대한 학습
 - [ ] Speaker / Style / Text disentanglement via mutual information minimization 기법 적용
