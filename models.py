@@ -516,7 +516,10 @@ class SynthesizerTrn(nn.Module):
   def forward(self, x, x_lengths, y, y_lengths, ref, ref_lengths, tag_emb, sid=None):
 
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
-    g = self.emb_g(ref.transpose(1,2), ref_lengths) # [b, h, 1]
+    if sid:
+      g = self.emb_s(sid)
+    else:
+      g = self.emb_g(ref.transpose(1,2), ref_lengths) # [b, h, 1]
     t = self.tag_encoder(tag_emb)
     g = torch.cat((g, t), 1)
     g = self.emb_encoder(g)
@@ -555,7 +558,10 @@ class SynthesizerTrn(nn.Module):
 
   def infer(self, x, x_lengths, ref, ref_lengths=None, tag_emb=None, sid=None, noise_scale=1, length_scale=1, noise_scale_w=1., max_len=None):
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
-    s = self.emb_s(sid).unsqueeze(-1)
+    if sid:
+      s = self.emb_s(sid).unsqueeze(-1)
+    else:
+      g = self.emb_g(ref.transpose(1,2), ref_lengths) # [b, h, 1]
     t = self.tag_encoder(tag_emb)
     g = torch.cat((s, t), 1)
     g = self.emb_encoder(g)
